@@ -1,5 +1,4 @@
 import requests
-import json
 API_KEY = "71T0T8IRQVS2M3Y2"
 
 def get_api_data(function, symbol, interval, month, avg = False):

@@ -1,0 +1,38 @@
+# Backend
+/backend/__pycache__/
+/backend/.idea
+# Default ignored files
+/backend/shelf/
+/backend/workspace.xml
+# Editor-based HTTP Client requests
+/backend/httpRequests/
+# Datasource local storage ignored files
+/backend/dataSources/
+/backend/dataSources.local.xml
+
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# Frontend
+# dependencies
+/frontend/node_modules
+
+# testing
+/frontend/coverage
+
+# next.js
+/frontend/.next/
+/frontend/out/
+
+# production
+/frontend/build
+
+# misc
+/frontend/.DS_Store
+/frontend/*.pem
+
+# env files (can opt-in for committing if needed)
+/frontend/.env*
+
+# typescript
+/frontend/*.tsbuildinfo
+/frontend/next-env.d.ts

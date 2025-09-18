@@ -2,16 +2,16 @@ from api_data import get_api_data
 from csv_data import  get_csv_data
 
 # selected by user in the future:
-INTERVAL = "30min"
-SYMBOL = "IBM"
-FUNCTION = "TIME_SERIES_INTRADAY"
-MONTH="2009-01"
-AVG = True
+INTERVAL:str = "30min"
+SYMBOL:str = "IBM"
+FUNCTION:str = "TIME_SERIES_INTRADAY"
+MONTH:str="2009-01"
+AVG:bool = False
 
-PATH = 'toy_s&p500.csv'
+PATH:str = 'toy_s&p500.csv'
 # PATH = 'full_s&p500.csv' #toogle this
 
-def get_data(src = "api"):
+def get_data(src:str = "api"):
     if src == "api":
         return get_api_data(FUNCTION, SYMBOL, INTERVAL, MONTH, AVG)
     if src == "csv":

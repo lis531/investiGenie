@@ -92,6 +92,7 @@ html, body {
   padding: 0;
   min-height: 100svh;
   align-items: center;
+  background-color: var(--bg-primary);
 }
 
 /* Default heading styles */

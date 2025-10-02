@@ -1,4 +1,6 @@
 import requests
+from plots import show_plot
+
 API_KEY = "71T0T8IRQVS2M3Y2"
 
 def get_api_data(function:str, symbol:str, interval:str, month:str, avg:bool = False):
@@ -13,6 +15,7 @@ def get_api_data(function:str, symbol:str, interval:str, month:str, avg:bool = F
             opens.append(float(data[f"Time Series ({interval})"][e]["1. open"]))
         result_avg = f"{symbol} average price in {month} is {round(sum(opens) / len(opens), 2)}"
         result_full = f"{symbol} prices every {interval} in {month}: {opens}"
+        show_plot(opens)
 
         return result_avg if avg else result_full
     else:

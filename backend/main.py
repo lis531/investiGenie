@@ -8,8 +8,8 @@ FUNCTION:str = "TIME_SERIES_INTRADAY"
 MONTH:str="2009-01"
 AVG:bool = False
 
-PATH:str = 'toy_s&p500.csv'
-# PATH = 'full_s&p500.csv' #toogle this
+# PATH:str = 'toy_s&p500.csv' #change default period in csv_data
+PATH:str = 'full_s&p500.csv' #toogle this
 
 def get_data(src:str = "api"):
     if src == "api":

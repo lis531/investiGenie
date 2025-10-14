@@ -1,5 +1,8 @@
+from audioop import reverse
+
 import requests
 from plots import show_plot
+from datetime import datetime
 
 API_KEY = "71T0T8IRQVS2M3Y2"
 
@@ -10,13 +13,19 @@ def get_api_data(function:str, symbol:str, interval:str, month:str, avg:bool = F
         data = response.json()
         if 'Error Message' in data.keys():
             return data["Error Message"]
+        print(data)
         opens = []
+        dates = []
         for e in data[f"Time Series ({interval})"]:
             opens.append(float(data[f"Time Series ({interval})"][e]["1. open"]))
-        result_avg = f"{symbol} average price in {month} is {round(sum(opens) / len(opens), 2)}"
+            dates.append(datetime.strptime(e, "%Y-%m-%d %H:%M:%S"))
+            result_avg = f"{symbol} average price in {month} is {round(sum(opens) / len(opens), 2)}"
+        opens = opens[::-1]
         result_full = f"{symbol} prices every {interval} in {month}: {opens}"
-        show_plot(opens)
+        show_plot(opens, dates)
 
         return result_avg if avg else result_full
     else:
         return None
+
+print()

@@ -12,12 +12,14 @@ def buy(cash, quantity, price, days_bought, i):
     cash -= price
     quantity += 1
     days_bought.append(i)
+    cash = round(cash, 2)
     return quantity, cash, days_bought
 
 def sell(cash, quantity, price, days_sold, i):
     cash += price
     quantity -= 1
     days_sold.append(i)
+    cash = round(cash, 2)
     return quantity, cash, days_sold
 
 @algorithm_decorator

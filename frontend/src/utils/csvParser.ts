@@ -9,6 +9,7 @@ export interface StockData {
   low: number;
   volume: string;
   change: string;
+  file_name: string;
 }
 
 export function parseCSVLine(line: string): string[] {
@@ -38,9 +39,9 @@ export function formatDate(dateStr: string): string {
   return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
 }
 
-export async function readStockDataFromCSV(): Promise<StockData[]> {
+export async function readStockDataFromCSV(file_name: string): Promise<StockData[]> {
   try {
-    const csvPath = path.join(process.cwd(), '..', 'backend', 'toy_s&p500.csv');
+    const csvPath = path.join(process.cwd(), '..', 'backend', file_name);
     
     if (!fs.existsSync(csvPath)) {
       throw new Error(`CSV file not found at: ${csvPath}`);
@@ -65,7 +66,8 @@ export async function readStockDataFromCSV(): Promise<StockData[]> {
         high: parseFloat(columns[3].replace(/"/g, '')),
         low: parseFloat(columns[4].replace(/"/g, '')),
         volume: columns[5].replace(/"/g, ''),
-        change: columns[6].replace(/"/g, '')
+        change: columns[6].replace(/"/g, ''),
+        file_name: file_name
       };
     });
     

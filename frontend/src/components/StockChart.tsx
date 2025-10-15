@@ -34,20 +34,47 @@ interface StockData {
     low: number;
     volume: string;
     change: string;
+    file_name: string;
 }
+
+const timeRanges = {
+    '1d': { label: '1 Dzień', filename: 'last_day.csv' },
+    '1w': { label: '1 Tydzień', filename: 'last_week.csv' },
+    '1m': { label: '1 Miesiąc', filename: 'last_month.csv' },
+    '1y': { label: '1 Rok', filename: 'last_year.csv' }
+};
 
 export default function StockChart() {
     const [stockData, setStockData] = useState<StockData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [selectedRange, setSelectedRange] = useState('1d');
+    const [dropdownOpen, setDropdownOpen] = useState(false);
 
     useEffect(() => {
-        fetchStockData();
+        fetchStockData("last_day.csv");
     }, []);
 
-    const fetchStockData = async () => {
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as Element;
+            if (!target.closest(`.${styles.customSelect}`)) {
+                setDropdownOpen(false);
+            }
+        };
+
+        if (dropdownOpen) {
+            document.addEventListener('click', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('click', handleClickOutside);
+        };
+    }, [dropdownOpen]);
+
+    const fetchStockData = async (filename: string) => {
         try {
-            const response = await fetch('/api/stock-data');
+            const response = await fetch(`/api/stock-data?file=${filename}`);
             const result = await response.json();
 
             if (result.success) {
@@ -171,6 +198,49 @@ export default function StockChart() {
 
     return (
         <motion.div className={styles.chartContainer} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.4 }}>
+            <div className={styles.customSelectContainer}>
+                <label className={styles.selectLabel}>Zakres czasowy</label>
+                <div className={styles.customSelect}>
+                    <div 
+                        className={`${styles.selectButton} ${dropdownOpen ? styles.selectButtonOpen : ''}`}
+                        onClick={() => setDropdownOpen(!dropdownOpen)}
+                    >
+                        <span className={styles.selectValue}>
+                            {timeRanges[selectedRange as keyof typeof timeRanges].label}
+                        </span>
+                        <svg 
+                            className={`${styles.selectIcon} ${dropdownOpen ? styles.selectIconOpen : ''}`}
+                            width="20" height="20" viewBox="0 0 20 20" fill="none"
+                        >
+                            <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                    </div>
+                    
+                    {dropdownOpen && (
+                        <motion.div 
+                            className={styles.selectDropdown}
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            {Object.entries(timeRanges).map(([value, { label, filename }]) => (
+                                <div
+                                    key={value}
+                                    className={`${styles.selectOption} ${selectedRange === value ? styles.selectOptionSelected : ''}`}
+                                    onClick={() => {
+                                        setSelectedRange(value);
+                                        setDropdownOpen(false);
+                                        fetchStockData(filename);
+                                    }}
+                                >
+                                    {label}
+                                </div>
+                            ))}
+                        </motion.div>
+                    )}
+                </div>
+            </div>
+            
             <div className={styles.chartWrapper}>
                 <Line data={chartData} options={options} />
             </div>

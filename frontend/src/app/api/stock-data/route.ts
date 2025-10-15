@@ -3,8 +3,10 @@ import { readStockDataFromCSV, StockData } from '../../../utils/csvParser';
 
 export async function GET(request: NextRequest) {
   try {
-    const stockData = await readStockDataFromCSV();
-    
+    const { searchParams } = new URL(request.url);
+    const file = searchParams.get('file') || 'toy_s&p500.csv';
+    const stockData = await readStockDataFromCSV(file);
+
     return NextResponse.json({
       success: true,
       data: stockData

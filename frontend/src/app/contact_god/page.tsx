@@ -21,8 +21,7 @@ export default function GodContact() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         
-        const combinedText = `${formData.name}${formData.email}${formData.message}`;
-        const seed = generateSeed(combinedText);
+        const seed = generateSeed(formData.message);
         const shouldInvest = seed % 2 === 0;
         
         const yesMessages = [

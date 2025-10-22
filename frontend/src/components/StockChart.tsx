@@ -38,10 +38,10 @@ interface StockData {
 }
 
 const timeRanges = {
-    '1d': { label: '1 Dzień', filename: 'last_day.csv' },
-    '1w': { label: '1 Tydzień', filename: 'last_week.csv' },
-    '1m': { label: '1 Miesiąc', filename: 'last_month.csv' },
-    '1y': { label: '1 Rok', filename: 'last_year.csv' }
+    '1d': { label: '1 Dzień' },
+    '1w': { label: '1 Tydzień' },
+    '1m': { label: '1 Miesiąc' },
+    '1y': { label: '1 Rok' }
 };
 
 export default function StockChart() {
@@ -52,7 +52,7 @@ export default function StockChart() {
     const [dropdownOpen, setDropdownOpen] = useState(false);
 
     useEffect(() => {
-        fetchStockData("last_day.csv");
+        fetchStockData("1d");
     }, []);
 
     useEffect(() => {
@@ -72,9 +72,9 @@ export default function StockChart() {
         };
     }, [dropdownOpen]);
 
-    const fetchStockData = async (filename: string) => {
+    const fetchStockData = async (range: string) => {
         try {
-            const response = await fetch(`/api/stock-data?file=${filename}`);
+            const response = await fetch(`/api/stock-data?range=${range}`);
             const result = await response.json();
 
             if (result.success) {
@@ -223,14 +223,14 @@ export default function StockChart() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.2 }}
                         >
-                            {Object.entries(timeRanges).map(([value, { label, filename }]) => (
+                            {Object.entries(timeRanges).map(([value, { label }]) => (
                                 <div
                                     key={value}
                                     className={`${styles.selectOption} ${selectedRange === value ? styles.selectOptionSelected : ''}`}
                                     onClick={() => {
                                         setSelectedRange(value);
                                         setDropdownOpen(false);
-                                        fetchStockData(filename);
+                                        fetchStockData(value);
                                     }}
                                 >
                                     {label}

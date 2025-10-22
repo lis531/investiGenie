@@ -14,6 +14,13 @@ def get_csv_data(path: str, period=('01/01/2000', '12/31/2018')):
                 if start_date <= row_date <= end_date:
                     result.append(row)
             except ValueError:
-                continue
+                try:
+                    row_date = datetime.strptime(row[0], "%Y-%d-%m")
+                    if start_date <= row_date <= end_date:
+                        result.append(row)
+                except ValueError:
+                    continue
+
+    #different date formats.TODO: optimize
 
     return result

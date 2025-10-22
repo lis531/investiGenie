@@ -1,31 +1,23 @@
-from audioop import reverse
+from operator import index
 
 import requests
-from plots import stock_plot
-from datetime import datetime
-
 API_KEY = "71T0T8IRQVS2M3Y2"
 
-def get_api_data(function:str, symbol:str, interval:str, month:str, avg:bool = False):
-    url = f"https://www.alphavantage.co/query?function={function}&symbol={symbol}&interval={interval}&outputsize=full&month={month}&apikey={API_KEY}"
+functions = ["TIME_SERIES_INTRADAY", "TIME_SERIES_DAILY", "TIME_SERIES_WEEKLY", "TIME_SERIES_MONTHLY"]
+intervals = ["1min", "5min", "15min", "30min", "60min"]
+#only intraday requires intervals.
+#all functions return historical data except intraday, which returns only 1 month
+
+def get_api_data(function_index:int, symbol:str, interval_index:int = 4):
+    function = functions[function_index]
+    interval = intervals[interval_index]
+    url = f"https://www.alphavantage.co/query?function={function}&symbol={symbol}&outputsize=full&datatype=csv&apikey={API_KEY}" if function_index else f"https://www.alphavantage.co/query?function={function}&symbol={symbol}&interval={interval}&outputsize=full&datatype=csv&apikey={API_KEY}"
     response = requests.get(url)
     if response.status_code == 200:
-        data = response.json()
-        if 'Error Message' in data.keys():
-            return data["Error Message"]
-        print(data)
-        opens = []
-        dates = []
-        for e in data[f"Time Series ({interval})"]:
-            opens.append(float(data[f"Time Series ({interval})"][e]["1. open"]))
-            dates.append(datetime.strptime(e, "%Y-%m-%d %H:%M:%S"))
-            result_avg = f"{symbol} average price in {month} is {round(sum(opens) / len(opens), 2)}"
-        opens = opens[::-1]
-        result_full = f"{symbol} prices every {interval} in {month}: {opens}"
-        stock_plot(opens, dates)
-
-        return result_avg if avg else result_full
+        # print(response.text)
+        with open("stock_data.csv", "w", newline='') as f:
+            f.write(response.text)
     else:
         return None
 
-print()
+get_api_data(1, "IBM")

@@ -1,5 +1,3 @@
-from operator import index
-
 import requests
 API_KEY = "71T0T8IRQVS2M3Y2"
 

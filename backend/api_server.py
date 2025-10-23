@@ -47,11 +47,7 @@ def get_function_index_for_range(range_type: str) -> int:
     """Determine which API function to use based on range"""
     if range_type == "1d":
         return 0  # TIME_SERIES_INTRADAY
-    elif range_type == "1w":
-        return 1  # TIME_SERIES_DAILY
-    elif range_type == "1m":
-        return 1  # TIME_SERIES_DAILY
-    elif range_type == "1y":
+    elif range_type == "1w" or range_type == "1m" or range_type == "1y":
         return 1  # TIME_SERIES_DAILY
     else:
         return 1  # Default to DAILY

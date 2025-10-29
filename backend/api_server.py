@@ -16,7 +16,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-SYMBOL = "IBM"
+# Default to S&P 500 Index
+SYMBOL = "^GSPC"
 
 def calculate_date_range(range_type: str) -> tuple:
     """Calculate start and end dates based on range type"""
@@ -52,7 +53,7 @@ def get_function_index_for_range(range_type: str) -> int:
     else:
         return 1  # Default to DAILY
 
-def parse_stock_data(csv_data: List[List[str]]) -> List[Dict[str, Any]]:
+def parse_stock_data(csv_data: List[List[str]], include_time: bool = False) -> List[Dict[str, Any]]:
     """Parse CSV data into JSON format for frontend"""
     result = []
     
@@ -69,9 +70,12 @@ def parse_stock_data(csv_data: List[List[str]]) -> List[Dict[str, Any]]:
             
             # parse the date
             date_obj = None
+            has_time = False
             for fmt in ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d", "%m/%d/%Y", "%Y-%d-%m"]:
                 try:
                     date_obj = datetime.strptime(date_str, fmt)
+                    if fmt == "%Y-%m-%d %H:%M:%S":
+                        has_time = True
                     break
                 except ValueError:
                     continue
@@ -80,7 +84,11 @@ def parse_stock_data(csv_data: List[List[str]]) -> List[Dict[str, Any]]:
                 print(f"Could not parse date: {date_str}")
                 continue
             
-            formatted_date = date_obj.strftime("%Y-%m-%d")
+            # Format date with time if include_time is True and time exists
+            if include_time and has_time:
+                formatted_date = date_obj.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                formatted_date = date_obj.strftime("%Y-%m-%d")
             
             # Alpha Vantage format: timestamp,open,high,low,close,volume
             # row[1]=open, row[4]=close
@@ -110,13 +118,13 @@ def parse_stock_data(csv_data: List[List[str]]) -> List[Dict[str, Any]]:
     return result
 
 @app.get("/api/stock-data")
-async def get_stock_data(range: str = "1d", symbol: str = "IBM"):
+async def get_stock_data(range: str = "1d", symbol: str = "^GSPC"):
     """
     Fetch stock data for the specified time range
     
     Parameters:
     - range: Time range (1d, 1w, 1m, 1y)
-    - symbol: Stock symbol (default: IBM)
+    - symbol: Stock symbol (default: ^GSPC for S&P 500)
     """
     try:
         # Get the appropriate function index based on range
@@ -141,8 +149,9 @@ async def get_stock_data(range: str = "1d", symbol: str = "IBM"):
         if len(csv_data) <= 1:  # Only header or empty
             raise HTTPException(status_code=404, detail="No data found in API response")
         
-        # Parse the data into JSON format
-        stock_data = parse_stock_data(csv_data)
+        # Parse the data into JSON format (include time for intraday)
+        include_time = (range == "1d")
+        stock_data = parse_stock_data(csv_data, include_time)
         
         if not stock_data:
             raise HTTPException(status_code=404, detail="No data found after parsing")
@@ -152,10 +161,19 @@ async def get_stock_data(range: str = "1d", symbol: str = "IBM"):
         start_date = datetime.strptime(date_range[0], "%m/%d/%Y")
         end_date = datetime.strptime(date_range[1], "%m/%d/%Y")
         
-        filtered_data = [
-            item for item in stock_data
-            if start_date <= datetime.strptime(item["date"], "%Y-%m-%d") <= end_date
-        ]
+        filtered_data = []
+        for item in stock_data:
+            try:
+                # Parse with or without time
+                if " " in item["date"]:
+                    item_date = datetime.strptime(item["date"], "%Y-%m-%d %H:%M:%S")
+                else:
+                    item_date = datetime.strptime(item["date"], "%Y-%m-%d")
+                
+                if start_date <= item_date <= end_date:
+                    filtered_data.append(item)
+            except ValueError:
+                continue
         
         if not filtered_data:
             # If no data in exact range, return all data (API might have its own limits)

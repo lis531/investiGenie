@@ -9,6 +9,9 @@
   },
   "dependencies": {
     "chart.js": "^4.5.0",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "chartjs-chart-financial": "^0.2.1",
+    "date-fns": "^4.1.0",
     "framer-motion": "^12.23.15",
     "next": "15.5.3",
     "react": "19.1.0",

@@ -1,39 +1,36 @@
-# backend/algorithms.py
-def algorithm_decorator(func):
-    def wrapper(prices):
-        quantity = 0
-        cash = 0
-        transaction_days = []
-        result = func(prices, quantity, cash, transaction_days)
-        return result
-    return wrapper
+def buy(cash, quantity, price):
+    if cash >= price:
+        cash -= price
+        quantity += 1
+    return quantity, cash
 
-def buy(cash, quantity, price, days_bought, i):
-    cash -= price
-    quantity += 1
-    days_bought.append(i)
-    cash = round(cash, 2)
-    return quantity, cash, days_bought
-
-def sell(cash, quantity, price, days_sold, i):
-    cash += price
-    quantity -= 1
-    days_sold.append(i)
-    cash = round(cash, 2)
+def sell(cash, quantity, price, days_sold):
+    if quantity >= 1:
+        cash += price
+        quantity -= 1
     return quantity, cash, days_sold
 
-@algorithm_decorator
-def buy_everyday(prices, quantity, cash, transaction_days):
+def buy_everyday(prices, cash, monthly_cash):
+    quantity = 0
+    total_cash = cash
     for i, price in enumerate(prices):
-        quantity, cash, transaction_days = buy(cash, quantity, price, transaction_days, i)
-    return cash, quantity, transaction_days
+        if i % 21 == 0:
+            cash += monthly_cash
+            total_cash += monthly_cash
+        quantity, cash = buy(cash, quantity, price)
+    return cash, quantity, total_cash
 
-@algorithm_decorator
-def buy_after_3_consecutive_down_days(prices, quantity, cash, transaction_days):
+def buy_after_3_consecutive_down_days(prices, cash, monthly_cash):
+    quantity = 0
+    total_cash = cash
     for i, price in enumerate(prices[3:]):
+        if i % 21 == 0:
+            cash += monthly_cash
+            total_cash += monthly_cash
         three_days_ago = prices[i - 3]
         two_days_ago = prices[i - 2]
         yesterday = prices[i - 1]
         if three_days_ago > two_days_ago > yesterday > price:
-            quantity, cash, transaction_days = buy(cash, quantity, price, transaction_days, i)
-    return cash, quantity, transaction_days
+            for i in range(1, round(monthly_cash/price)):
+                quantity, cash = buy(cash, quantity, price)
+    return cash, quantity, total_cash

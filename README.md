@@ -17,11 +17,24 @@ Sklonuj repozytorium:
 
 Zainstaluj zależności:
 
-`pip install -r requirements.txt`
+`cd backend;
+pip install -r requirements.txt`
+
+Uruchom serwer:
+
+`py -m uvicorn api_server:app --host 0.0.0.0 --port 8000 --reload`
+
+Uruchom frontend:
+
+-Uruchom nowe okno terminala
+
+`cd frontend;
+npm install;
+npm run dev`
+
 
 ## Użytkowanie
 Uruchom główną aplikację:
-
-`python main.py`
+[http://localhost:3000](http://localhost:3000)
 
 Szczegółowe instrukcje znajdziesz w dokumentacji.

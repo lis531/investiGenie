@@ -50,6 +50,8 @@ export default function StockChart() {
     const [fetchingData, setFetchingData] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [selectedRange, setSelectedRange] = useState('1d');
+    const [symbolInput, setSymbolInput] = useState('^GSPC');
+    const [activeSymbol, setActiveSymbol] = useState('^GSPC');
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [chartKey, setChartKey] = useState(0);
 
@@ -82,7 +84,10 @@ export default function StockChart() {
             const result = await response.json();
 
             if (result.success) {
-                setStockData(result.data);
+                const validData = result.data.filter((item: StockData) => 
+                    item.open > 0 && item.high > 0 && item.low > 0 && item.price > 0
+                );
+                setStockData(validData);
                 setChartKey(prev => prev + 1);
             } else {
                 setError('Failed to fetch data');
@@ -133,29 +138,116 @@ export default function StockChart() {
         );
     }
 
-    const candlestickData = stockData.map(item => {
-        let dateObj: Date;
-        if (item.date.includes(' ')) {
+    const validData = stockData
+        .map(item => {
+            let dateObj: Date;
             dateObj = new Date(item.date);
-        } else {
-            // Date only
-            dateObj = new Date(item.date);
+            
+            return {
+                x: dateObj.getTime(),
+                o: item.open,
+                h: item.high,
+                l: item.low,
+                c: item.price,
+                date: dateObj
+            };
+        })
+        .sort((a, b) => a.x - b.x);
+
+    // Limit to max 100 candles
+    const MAX_CANDLES = 100;
+    let candlestickData;
+    
+    if (validData.length > MAX_CANDLES) {
+        // Calculate how many candles to group together
+        const groupSize = Math.ceil(validData.length / MAX_CANDLES);
+        const aggregated = [];
+        
+        for (let i = 0; i < validData.length; i += groupSize) {
+            const group = validData.slice(i, i + groupSize);
+            if (group.length === 0) continue;
+            
+            // Aggregate the group into a single candle
+            const aggregatedCandle = {
+                x: group[0].x, // Use first timestamp in group
+                o: group[0].o, // Open of first candle
+                h: Math.max(...group.map(c => c.h)), // Highest high
+                l: Math.min(...group.map(c => c.l)), // Lowest low
+                c: group[group.length - 1].c // Close of last candle
+            };
+            
+            aggregated.push(aggregatedCandle);
         }
         
-        return {
-            x: dateObj.getTime(),
-            o: item.open,
-            h: item.high,
-            l: item.low,
-            c: item.price
-        };
-    }).reverse();
+        candlestickData = aggregated;
+    } else {
+        // No need to aggregate, use all data
+        candlestickData = validData.map(item => ({
+            x: item.x,
+            o: item.o,
+            h: item.h,
+            l: item.l,
+            c: item.c
+        }));
+    }
+
+    const indexedCandles = candlestickData.map((item, index) => ({
+        idx: index,
+        ts: item.x,
+        o: item.o,
+        h: item.h,
+        l: item.l,
+        c: item.c
+    }));
+
+    const getFormattedLabel = (timestamp: number): string => {
+        const date = new Date(timestamp);
+        if (selectedRange === '1d') {
+            return date.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+        }
+        if (selectedRange === '1y') {
+            return date.toLocaleDateString('pl-PL', { month: 'short', year: 'numeric' });
+        }
+        return date.toLocaleDateString('pl-PL', { month: 'short', day: 'numeric' });
+    };
+
+    const xMax = indexedCandles.length > 0 ? indexedCandles.length - 1 : 0;
+
+    const getLabelStep = () => {
+        if (indexedCandles.length <= 1) {
+            return 1;
+        }
+
+        if (selectedRange === '1d') {
+            return Math.max(1, Math.ceil(indexedCandles.length / 6));
+        }
+
+        if (selectedRange === '1w') {
+            return Math.max(1, Math.ceil(indexedCandles.length / 7));
+        }
+
+        if (selectedRange === '1m') {
+            return Math.max(1, Math.ceil(indexedCandles.length / 10));
+        }
+
+        // 1y or default
+        return Math.max(1, Math.ceil(indexedCandles.length / 12));
+    };
+
+    const labelStep = getLabelStep();
 
     const chartData: any = {
         datasets: [
             {
                 label: 'S&P 500',
-                data: candlestickData,
+                data: indexedCandles.map(item => ({
+                    x: item.idx,
+                    o: item.o,
+                    h: item.h,
+                    l: item.l,
+                    c: item.c,
+                    ts: item.ts
+                })),
                 color: {
                     up: 'rgb(16, 185, 129)',
                     down: 'rgb(239, 68, 68)',
@@ -165,13 +257,6 @@ export default function StockChart() {
                 borderWidth: 1,
             }
         ],
-    };
-
-    const getTimeUnit = (): 'hour' | 'day' | 'week' | 'month' => {
-        if (selectedRange === '1d') return 'hour';
-        if (selectedRange === '1w') return 'day';
-        if (selectedRange === '1m') return 'week';
-        return 'month';
     };
 
     const options: any = {
@@ -200,27 +285,33 @@ export default function StockChart() {
         },
         scales: {
             x: {
-                type: 'time',
-                time: {
-                    unit: getTimeUnit(),
-                    displayFormats: {
-                        hour: 'HH:mm',
-                        day: 'MMM dd',
-                        week: 'MMM dd',
-                        month: 'MMM yyyy'
-                    },
-                    tooltipFormat: selectedRange === '1d' ? 'PPp' : 'PP'
-                },
+                type: 'linear',
+                min: 0,
+                max: xMax,
                 grid: {
                     display: true,
                     color: 'rgba(156, 163, 175, 0.1)',
                     drawOnChartArea: true,
                 },
                 ticks: {
+                    stepSize: 1,
                     maxRotation: 0,
-                    autoSkipPadding: 20,
+                    autoSkip: false,
                     font: {
                         size: 12
+                    },
+                    callback: function(value: any) {
+                        if (!Number.isInteger(value)) {
+                            return '';
+                        }
+                        const candle = indexedCandles[value];
+                        if (!candle) {
+                            return '';
+                        }
+                        if (value === 0 || value === xMax || value % labelStep === 0) {
+                            return getFormattedLabel(candle.ts);
+                        }
+                        return '';
                     }
                 }
             },
@@ -270,7 +361,8 @@ export default function StockChart() {
                 bodySpacing: 6,
                 callbacks: {
                     title: function(tooltipItems: any) {
-                        const date = new Date(tooltipItems[0].parsed.x);
+                        const raw = tooltipItems[0].raw;
+                        const date = new Date(raw.ts);
                         if (selectedRange === '1d') {
                             return date.toLocaleString('pl-PL', {
                                 year: 'numeric',
@@ -279,13 +371,12 @@ export default function StockChart() {
                                 hour: '2-digit',
                                 minute: '2-digit'
                             });
-                        } else {
-                            return date.toLocaleDateString('pl-PL', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                            });
                         }
+                        return date.toLocaleDateString('pl-PL', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        });
                     },
                     label: function(context: any) {
                         const data = context.raw;
@@ -391,48 +482,50 @@ export default function StockChart() {
                 <Chart type='candlestick' data={chartData} options={options} />
             </motion.div>
 
-            <motion.div 
-                className={styles.stats}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-            >
+            {stockData.length > 0 && stockData[0] && (
                 <motion.div 
-                    className={styles.statItem}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: 0.35 }}
-                >
-                    <span className={styles.statLabel}>Aktualna cena:</span>
-                    <span 
-                        className={styles.statValue}
-                    >
-                        ${stockData[0]?.price.toFixed(2)}
-                    </span>
-                </motion.div>
-                <motion.div 
-                    className={styles.statItem}
+                    className={styles.stats}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.4 }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
                 >
-                    <span className={styles.statLabel}>Dzienna zmiana:</span>
-                    <span 
-                        className={`${styles.statValue} ${stockData[0]?.change.includes('-') ? styles.negative : styles.positive}`}
+                    <motion.div 
+                        className={styles.statItem}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.4, delay: 0.35 }}
                     >
-                        {stockData[0]?.change}
-                    </span>
+                        <span className={styles.statLabel}>Aktualna cena:</span>
+                        <span 
+                            className={styles.statValue}
+                        >
+                            ${stockData[0].price.toFixed(2)}
+                        </span>
+                    </motion.div>
+                    <motion.div 
+                        className={styles.statItem}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.4 }}
+                    >
+                        <span className={styles.statLabel}>Dzienna zmiana:</span>
+                        <span 
+                            className={`${styles.statValue} ${stockData[0].change.includes('-') ? styles.negative : styles.positive}`}
+                        >
+                            {stockData[0].change}
+                        </span>
+                    </motion.div>
+                    <motion.div 
+                        className={styles.statItem}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.4, delay: 0.45 }}
+                    >
+                        <span className={styles.statLabel}>Wolumen:</span>
+                        <span className={styles.statValue}>{stockData[0].volume}</span>
+                    </motion.div>
                 </motion.div>
-                <motion.div 
-                    className={styles.statItem}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: 0.45 }}
-                >
-                    <span className={styles.statLabel}>Wolumen:</span>
-                    <span className={styles.statValue}>{stockData[0]?.volume}</span>
-                </motion.div>
-            </motion.div>
+            )}
         </motion.div>
     );
 }

@@ -20,24 +20,19 @@ app.add_middleware(
 SYMBOL = "^GSPC"
 
 def calculate_date_range(range_type: str) -> tuple:
-    """Calculate start and end dates based on range type"""
+    """Calculate start and end dates - get enough data to filter later"""
     end_date = datetime.now()
     
     if range_type == "1d":
-        # Last day - get last trading day
-        start_date = end_date - timedelta(days=1)
+        start_date = end_date - timedelta(days=5)
     elif range_type == "1w":
-        # Last week
-        start_date = end_date - timedelta(days=7)
+        start_date = end_date - timedelta(days=20)
     elif range_type == "1m":
-        # Last month
-        start_date = end_date - timedelta(days=30)
+        start_date = end_date - timedelta(days=50)
     elif range_type == "1y":
-        # Last year
-        start_date = end_date - timedelta(days=365)
+        start_date = end_date - timedelta(days=500)
     else:
-        # Default to 1 day
-        start_date = end_date - timedelta(days=1)
+        start_date = end_date - timedelta(days=5)
     
     return (
         start_date.strftime("%m/%d/%Y"),
@@ -93,7 +88,14 @@ def parse_stock_data(csv_data: List[List[str]], include_time: bool = False) -> L
             # Alpha Vantage format: timestamp,open,high,low,close,volume
             # row[1]=open, row[4]=close
             open_price = float(row[1])
+            high_price = float(row[2]) if len(row) > 2 else open_price
+            low_price = float(row[3]) if len(row) > 3 else open_price
             close_price = float(row[4])
+            
+            # Skip rows with invalid/zero prices
+            if open_price <= 0 or high_price <= 0 or low_price <= 0 or close_price <= 0:
+                print(f"Skipping row with invalid prices: {row}")
+                continue
             
             if open_price > 0:
                 change = ((close_price - open_price) / open_price) * 100
@@ -105,8 +107,8 @@ def parse_stock_data(csv_data: List[List[str]], include_time: bool = False) -> L
                 "date": formatted_date,
                 "price": close_price,
                 "open": open_price,
-                "high": float(row[2]) if len(row) > 2 else close_price,
-                "low": float(row[3]) if len(row) > 3 else close_price,
+                "high": high_price,
+                "low": low_price,
                 "volume": row[5] if len(row) > 5 else "0",
                 "change": change_str,
                 "file_name": "api"
@@ -156,28 +158,54 @@ async def get_stock_data(range: str = "1d", symbol: str = "^GSPC"):
         if not stock_data:
             raise HTTPException(status_code=404, detail="No data found after parsing")
         
-        # Filter by date range
-        date_range = calculate_date_range(range)
-        start_date = datetime.strptime(date_range[0], "%m/%d/%Y")
-        end_date = datetime.strptime(date_range[1], "%m/%d/%Y")
+        # Sort data by date (newest first)
+        stock_data.sort(key=lambda x: datetime.strptime(
+            x["date"], 
+            "%Y-%m-%d %H:%M:%S" if " " in x["date"] else "%Y-%m-%d"
+        ), reverse=True)
         
-        filtered_data = []
-        for item in stock_data:
-            try:
-                # Parse with or without time
-                if " " in item["date"]:
-                    item_date = datetime.strptime(item["date"], "%Y-%m-%d %H:%M:%S")
-                else:
-                    item_date = datetime.strptime(item["date"], "%Y-%m-%d")
-                
-                if start_date <= item_date <= end_date:
-                    filtered_data.append(item)
-            except ValueError:
-                continue
-        
-        if not filtered_data:
-            # If no data in exact range, return all data (API might have its own limits)
+        # For daily data, we need to get unique dates first, then take last N days
+        if not include_time and range in ["1w", "1m", "1y"]:
+            # Group by unique dates
+            unique_dates = []
+            dates_seen = set()
+            
+            for item in stock_data:
+                date_only = item["date"].split()[0] if " " in item["date"] else item["date"]
+                if date_only not in dates_seen:
+                    unique_dates.append(date_only)
+                    dates_seen.add(date_only)
+            
+            # Determine how many unique days we need
+            days_needed = {
+                "1w": 7,
+                "1m": 22,
+                "1y": 252
+            }.get(range, 7)
+            
+            # Take only the first N unique dates (most recent)
+            selected_dates = set(unique_dates[:days_needed])
+            
+            # Filter data to only include these dates
+            filtered_data = [
+                item for item in stock_data 
+                if (item["date"].split()[0] if " " in item["date"] else item["date"]) in selected_dates
+            ]
+        elif include_time:
+            # For intraday (1d), get all data from the most recent trading day
+            if stock_data:
+                most_recent_date = stock_data[0]["date"].split()[0]
+                filtered_data = [item for item in stock_data if item["date"].startswith(most_recent_date)]
+            else:
+                filtered_data = []
+        else:
             filtered_data = stock_data
+        
+        # Sort back to chronological order (oldest first for chart display)
+        filtered_data.sort(key=lambda x: datetime.strptime(
+            x["date"], 
+            "%Y-%m-%d %H:%M:%S" if " " in x["date"] else "%Y-%m-%d"
+        ))
         
         return {
             "success": True,

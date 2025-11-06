@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const range = searchParams.get('range') || '1d';
-    const symbol = searchParams.get('symbol') || 'IBM';
+    const symbol = searchParams.get('symbol') || '^GSPC';
 
     // Call the Python FastAPI backend
     const response = await fetch(`${PYTHON_API_URL}/api/stock-data?range=${range}&symbol=${symbol}`);

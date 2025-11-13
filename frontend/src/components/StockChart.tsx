@@ -144,28 +144,39 @@ export default function StockChart() {
         );
     }
 
-    const candlestickData = stockData.map(item => {
-        let dateObj: Date;
-        if (item.date.includes(' ')) {
-            dateObj = new Date(item.date);
-        } else {
-            // Date only
-            dateObj = new Date(item.date);
-        }
-        
-        return {
-            x: dateObj.getTime(),
-            o: item.open,
-            h: item.high,
-            l: item.low,
-            c: item.price
-        };
-    }).reverse();
+    const processedData = stockData
+        .map(item => {
+            let dateObj: Date;
+            if (item.date.includes(' ')) {
+                dateObj = new Date(item.date);
+            } else {
+                // Date only
+                dateObj = new Date(item.date);
+            }
+
+            return {
+                ...item,
+                dateObj
+            };
+        })
+        .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
+
+    const candlestickData = processedData.map((item, index) => ({
+        x: index,
+        o: item.open,
+        h: item.high,
+        l: item.low,
+        c: item.price,
+        date: item.dateObj
+    }));
+
+    const chartLabels = processedData.map(item => item.dateObj.toISOString());
 
     const chartData: any = {
+        labels: chartLabels,
         datasets: [
             {
-                label: 'S&P 500',
+                label: currentSymbol,
                 data: candlestickData,
                 color: {
                     up: 'rgb(16, 185, 129)',
@@ -178,22 +189,12 @@ export default function StockChart() {
         ],
     };
 
-    const getTimeUnit = (): 'hour' | 'day' | 'week' | 'month' => {
-        if (selectedRange === '1d') return 'hour';
-        if (selectedRange === '1w') return 'day';
-        if (selectedRange === '1m') return 'week';
-        return 'month';
-    };
-
     const options: any = {
         responsive: true,
         maintainAspectRatio: false,
         animation: {
             duration: 1000,
             easing: 'easeInOutQuart',
-            onComplete: () => {
-                // Animation complete
-            },
             delay: (context: any) => {
                 let delay = 0;
                 if (context.type === 'data' && context.mode === 'default') {
@@ -211,17 +212,7 @@ export default function StockChart() {
         },
         scales: {
             x: {
-                type: 'time',
-                time: {
-                    unit: getTimeUnit(),
-                    displayFormats: {
-                        hour: 'HH:mm',
-                        day: 'MMM dd',
-                        week: 'MMM dd',
-                        month: 'MMM yyyy'
-                    },
-                    tooltipFormat: selectedRange === '1d' ? 'PPp' : 'PP'
-                },
+                type: 'category',
                 grid: {
                     display: true,
                     color: 'rgba(156, 163, 175, 0.1)',
@@ -232,6 +223,32 @@ export default function StockChart() {
                     autoSkipPadding: 20,
                     font: {
                         size: 12
+                    },
+                    callback: function(value: any, index: number) {
+                        const dataPoint = candlestickData[index];
+                        if (!dataPoint || !(dataPoint.date instanceof Date)) {
+                            return '';
+                        }
+
+                        const date = dataPoint.date;
+
+                        if (selectedRange === '1d') {
+                            return date.toLocaleTimeString('pl-PL', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                        }
+
+                        if (selectedRange === '1y') {
+                            return date.toLocaleDateString('pl-PL', {
+                                month: 'short'
+                            });
+                        }
+
+                        return date.toLocaleDateString('pl-PL', {
+                            month: 'short',
+                            day: 'numeric'
+                        });
                     }
                 }
             },
@@ -279,7 +296,13 @@ export default function StockChart() {
                 bodySpacing: 6,
                 callbacks: {
                     title: function(tooltipItems: any) {
-                        const date = new Date(tooltipItems[0].parsed.x);
+                        const dataIndex = tooltipItems[0].dataIndex;
+                        const dataPoint = candlestickData[dataIndex];
+                        if (!dataPoint || !(dataPoint.date instanceof Date)) {
+                            return '';
+                        }
+
+                        const date = dataPoint.date;
                         if (selectedRange === '1d') {
                             return date.toLocaleString('pl-PL', {
                                 year: 'numeric',
@@ -288,13 +311,13 @@ export default function StockChart() {
                                 hour: '2-digit',
                                 minute: '2-digit'
                             });
-                        } else {
-                            return date.toLocaleDateString('pl-PL', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                            });
                         }
+
+                        return date.toLocaleDateString('pl-PL', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        });
                     },
                     label: function(context: any) {
                         const data = context.raw;

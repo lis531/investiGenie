@@ -15,10 +15,11 @@
     font-weight: var(--font-weight-bold);
     color: var(--text-primary);
     margin-bottom: var(--spacing-md);
-    background: var(--gradient-blue);
+    background: linear-gradient(135deg, #1e293b 0%, #3b82f6 50%, #06b6d4 100%);
     -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
     background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.03em;
 }
 
 .subtitle {
@@ -40,17 +41,23 @@
 }
 
 .featureCard {
-    background: var(--bg-secondary);
-    border-radius: 16px;
+    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 20px;
     padding: var(--spacing-xl);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border: 1px solid var(--border-color);
+    box-shadow: 
+        0 10px 15px -3px rgba(0, 0, 0, 0.08),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.6);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(226, 232, 240, 0.6);
 }
 
 .featureCard:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    transform: translateY(-4px);
+    box-shadow: 
+        0 20px 25px -5px rgba(0, 0, 0, 0.12),
+        0 10px 10px -5px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.6);
 }
 
 .featureCard h2 {
@@ -67,12 +74,16 @@
 }
 
 .comingSoon {
-    background: var(--gradient-blue-light);
-    color: var(--color-accent);
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    color: #2563eb;
     padding: var(--spacing-md) var(--spacing-lg);
-    border-radius: 24px;
+    border-radius: 16px;
     text-align: center;
-    font-weight: var(--font-weight-medium);
+    font-weight: 600;
     font-size: var(--font-size-base);
-    border: 2px dashed var(--color-accent);
+    border: 2px solid rgba(59, 130, 246, 0.3);
+    box-shadow: 
+        0 4px 6px -1px rgba(59, 130, 246, 0.1),
+        0 2px 4px -1px rgba(59, 130, 246, 0.06);
+    letter-spacing: -0.01em;
 }

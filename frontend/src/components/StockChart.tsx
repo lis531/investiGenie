@@ -326,6 +326,14 @@ export default function StockChart() {
             animate={{ scale: 1, opacity: 1, y: 0 }} 
             transition={{ duration: 0.5, ease: "easeOut" }}
         >
+            <motion.h1 
+                className={styles.chartTitle}
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+            >
+                {currentSymbol} - Analiza Giełdowa
+            </motion.h1>
             <div className={styles.controlsRow}>
                 <motion.div 
                     className={styles.customSelectContainer}

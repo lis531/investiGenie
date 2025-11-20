@@ -68,7 +68,7 @@ def algorithm_wrapper(prices: list[float], start_cash: float, monthly_cash: floa
             total_cash += monthly_cash
         if stop_loss >= price or take_profit <= price:
             sell(cash, owned_quantity, price, owned_quantity)
-        order_type = algorithm(i, prices, start_cash, monthly_cash, cash)
+        order_type, *parameters = algorithm(i, prices, start_cash, monthly_cash, cash)
 
         match exposure_type:
             case "fixed_fraction":
@@ -84,7 +84,11 @@ def algorithm_wrapper(prices: list[float], start_cash: float, monthly_cash: floa
             case "sell":
                 owned_quantity, cash = sell(cash, owned_quantity, price, order_quantity)
             case "stop_loss":
-                stop_loss = order_quantity
+                if parameters[0].is_integer():
+                    stop_loss = parameters[0]
+            case "take_profit":
+                if parameters[0].is_integer():
+                    take_profit = parameters[0]
             case "none":
                 pass
     return cash, owned_quantity, total_cash
@@ -128,6 +132,7 @@ def simulate(algorithm=algorithms.buy_and_hold, start_cash: float = 100000, mont
 # print(simulate(algorithms.buy_after_3_consecutive_down_days))
 # print(simulate(algorithms.buy_everyday))
 # print(simulate(exposure_value=1))
+# print(simulate(algorithms.buy_the_dip))
 
 # data = get_csv_data("full_s&p500.csv")
 # stock_plot([float(e[1]) for i, e in enumerate(reversed(data)) if i % 30 == 0], [e[0] for i, e in enumerate(reversed(data)) if i % 30 == 0])

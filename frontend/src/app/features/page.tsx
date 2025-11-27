@@ -7,7 +7,7 @@ export default function FeaturesPage() {
   return (
     <motion.div className={styles.container} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.4 }}>
       <div className={styles.header}>
-        <h1 className={styles.title}>📊 Funkcje InvestiGenie</h1>
+        <h1 className={styles.title}>Funkcje InvestiGenie</h1>
         <p className={styles.subtitle}>
           Zaawansowane narzędzia do analizy rynku finansowego
         </p>

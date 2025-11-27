@@ -56,18 +56,15 @@ export default function GodContact() {
 
     return (
         <div className={styles.page}>
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.4 }}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
                 <h1 className={styles.title}>Kontakt z Bogiem</h1>
                 <p className={styles.description}>
                     Zapytaj Boga czy powinieneś inwestować. Otrzymasz mądrą odpowiedź.
                 </p>
             </motion.div>
             
-            <motion.form 
+            <form 
                 className={styles.form} 
-                initial={{ scale: 0.9, opacity: 0 }} 
-                animate={{ scale: 1, opacity: 1 }} 
-                transition={{ duration: 0.4, delay: 0.2 }}
                 onSubmit={handleSubmit}
             >
                 <label className={styles.label}>
@@ -104,14 +101,14 @@ export default function GodContact() {
                     />
                 </label>
                 <button type="submit" className={styles.button}>Zapytaj Boga</button>
-            </motion.form>
+            </form>
 
             {response && (
                 <motion.div 
                     className={styles.response}
-                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                    animate={{ scale: 1, opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
                 >
                     <div className={styles.responseTitle}>Odpowiedź od Boga:</div>
                     <div className={`${styles.responseAnswer} ${response.answer ? styles.responseYes : styles.responseNo}`}>

@@ -3,13 +3,12 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    min-height: 100svh;
-    padding: 2rem;
+    padding: 10rem 2rem 2rem;
 }
 
 .title {
     font-size: 3rem;
-    font-weight: 700;
+    font-weight: 800;
     margin-bottom: 1rem;
     text-align: center;
     background: linear-gradient(135deg, #1e293b 0%, #3b82f6 50%, #06b6d4 100%);
@@ -51,57 +50,21 @@
     gap: 0.5rem;
 }
 
-.input {
-    padding: 0.75rem 1rem;
-    border: 2px solid #e2e8f0;
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    transition: border-color 0.2s ease;
-    background: #ffffff;
+.fullWidth {
+    width: 100%;
+    box-sizing: border-box;
 }
 
-.input:focus {
-    outline: none;
-    border-color: #3b82f6;
+.noResize {
+    resize: none;
 }
 
-.textarea {
-    padding: 0.75rem 1rem;
-    border: 2px solid #e2e8f0;
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    min-height: 120px;
-    resize: vertical;
-    font-family: inherit;
-    transition: border-color 0.2s ease;
-    background: #ffffff;
+.tall {
+    min-height: 140px;
+    line-height: 1.5;
 }
 
-.textarea:focus {
-    outline: none;
-    border-color: #3b82f6;
-}
-
-.button {
-    padding: 0.75rem 2rem;
-    background: #3b82f6;
-    color: white;
-    border: none;
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s ease;
-    margin-top: 0.5rem;
-}
-
-.button:hover {
-    background: #2563eb;
-}
-
-.button:active {
-    background: #1d4ed8;
-}
+/* input and button styles now use global .input and .btn-primary */
 
 .response {
     margin-top: 2rem;

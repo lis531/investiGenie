@@ -1,6 +1,5 @@
 .container {
-    min-height: 100vh;
-    padding-top: 10vh;
+    padding-top: 10rem;
     max-width: 1400px;
     margin: 0 auto;
 }
@@ -12,7 +11,7 @@
 
 .title {
     font-size: var(--font-size-h1);
-    font-weight: var(--font-weight-bold);
+    font-weight: 800;
     color: var(--text-primary);
     margin-bottom: var(--spacing-md);
     background: linear-gradient(135deg, #1e293b 0%, #3b82f6 50%, #06b6d4 100%);
@@ -50,14 +49,6 @@
         inset 0 1px 0 0 rgba(255, 255, 255, 0.6);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid rgba(226, 232, 240, 0.6);
-}
-
-.featureCard:hover {
-    transform: translateY(-4px);
-    box-shadow: 
-        0 20px 25px -5px rgba(0, 0, 0, 0.12),
-        0 10px 10px -5px rgba(0, 0, 0, 0.08),
-        inset 0 1px 0 0 rgba(255, 255, 255, 0.6);
 }
 
 .featureCard h2 {

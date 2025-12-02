@@ -55,13 +55,13 @@ export default function GodContact() {
     };
 
     return (
-        <div className={styles.page}>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+        <motion.div className={styles.page} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <div>
                 <h1 className={styles.title}>Kontakt z Bogiem</h1>
                 <p className={styles.description}>
                     Zapytaj Boga czy powinieneś inwestować. Otrzymasz mądrą odpowiedź.
                 </p>
-            </motion.div>
+            </div>
             
             <form 
                 className={styles.form} 
@@ -72,7 +72,7 @@ export default function GodContact() {
                     <input 
                         type="text" 
                         name="name"
-                        className={styles.input}
+                        className={`input ${styles.fullWidth}`}
                         value={formData.name}
                         onChange={handleInputChange}
                         required
@@ -83,7 +83,7 @@ export default function GodContact() {
                     <input 
                         type="email" 
                         name="email"
-                        className={styles.input}
+                        className={`input ${styles.fullWidth}`}
                         value={formData.email}
                         onChange={handleInputChange}
                         required
@@ -93,30 +93,25 @@ export default function GodContact() {
                     Pytanie o inwestycję:
                     <textarea 
                         name="message"
-                        className={styles.textarea}
+                        className={`input ${styles.fullWidth} ${styles.noResize} ${styles.tall}`}
                         value={formData.message}
                         onChange={handleInputChange}
                         placeholder="Opisz swoją sytuację inwestycyjną..."
                         required
                     />
                 </label>
-                <button type="submit" className={styles.button}>Zapytaj Boga</button>
+                <button type="submit" className="btn-primary">Zapytaj Boga</button>
             </form>
 
             {response && (
-                <motion.div 
-                    className={styles.response}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                >
+                <div className={`card ${styles.response}`}>
                     <div className={styles.responseTitle}>Odpowiedź od Boga:</div>
                     <div className={`${styles.responseAnswer} ${response.answer ? styles.responseYes : styles.responseNo}`}>
                         {response.answer ? "TAK" : "NIE"}
                     </div>
                     <div className={styles.responseMessage}>{response.message}</div>
-                </motion.div>
+                </div>
             )}
-        </div>
+        </motion.div>
     );
 }

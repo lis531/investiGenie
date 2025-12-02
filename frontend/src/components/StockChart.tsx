@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { motion } from "framer-motion";
+ 
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -108,40 +108,15 @@ export default function StockChart() {
 
     if (loading) {
         return (
-            <motion.div 
-                className={styles.loading}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-            >
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3 }}
-                />
-                <motion.p
-                    animate={{ opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                >
-                    Ładowanie danych giełdowych...
-                </motion.p>
-            </motion.div>
+            <div className={styles.loading}>
+                <div className={styles.spinner} />
+                <p>Ładowanie danych giełdowych...</p>
+            </div>
         );
     }
 
     if (error) {
-        return (
-            <motion.div 
-                className={styles.error}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3 }}
-            >
-                Błąd: {error}
-            </motion.div>
-        );
+        return <div className={styles.error}>Błąd: {error}</div>;
     }
 
     const processedData = stockData
@@ -222,7 +197,8 @@ export default function StockChart() {
                     maxRotation: 0,
                     autoSkipPadding: 20,
                     font: {
-                        size: 12
+                        size: 12,
+                        family: '"DM Sans", sans-serif'
                     },
                     callback: function(value: any, index: number) {
                         const dataPoint = candlestickData[index];
@@ -253,7 +229,7 @@ export default function StockChart() {
                 }
             },
             y: {
-                position: 'right',
+                position: 'left',
                 grid: {
                     display: true,
                     color: 'rgba(156, 163, 175, 0.1)',
@@ -263,7 +239,8 @@ export default function StockChart() {
                         return '$' + value.toFixed(2);
                     },
                     font: {
-                        size: 12
+                        size: 12,
+                        family: '"DM Sans", sans-serif'
                     }
                 }
             }
@@ -277,7 +254,8 @@ export default function StockChart() {
                 text: `${currentSymbol} - Wykres Świecowy`,
                 font: {
                     size: 18,
-                    weight: 'bold' as const
+                    weight: 'bold' as const,
+                    family: '"DM Sans", sans-serif'
                 },
                 padding: 20,
                 color: '#1f2937'
@@ -286,14 +264,15 @@ export default function StockChart() {
                 enabled: true,
                 mode: 'nearest' as const,
                 intersect: false,
-                backgroundColor: 'rgba(17, 24, 39, 0.95)',
-                titleColor: '#fff',
-                bodyColor: '#fff',
-                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                titleColor: '#1e293b',
+                bodyColor: '#475569',
+                borderColor: '#e2e8f0',
                 borderWidth: 1,
                 cornerRadius: 8,
                 padding: 12,
                 bodySpacing: 6,
+                displayColors: true,
                 callbacks: {
                     title: function(tooltipItems: any) {
                         const dataIndex = tooltipItems[0].dataIndex;
@@ -331,6 +310,15 @@ export default function StockChart() {
                             `Zamknięcie: $${data.c.toFixed(2)}`,
                             `Zmiana: ${changeSymbol}${change}%`
                         ];
+                    },
+                    labelColor: function(context: any) {
+                        const data = context.raw;
+                        const isUp = data.c >= data.o;
+                        const color = isUp ? 'rgb(16, 185, 129)' : 'rgb(239, 68, 68)';
+                        return {
+                            borderColor: color,
+                            backgroundColor: color
+                        };
                     }
                 }
             }
@@ -343,27 +331,12 @@ export default function StockChart() {
     };
 
     return (
-        <motion.div 
-            className={styles.chartContainer} 
-            initial={{ scale: 0.95, opacity: 0, y: 20 }} 
-            animate={{ scale: 1, opacity: 1, y: 0 }} 
-            transition={{ duration: 0.5, ease: "easeOut" }}
-        >
-            <motion.h1 
-                className={styles.chartTitle}
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-            >
+        <div className={styles.chartContainer}>
+            <h2 className={styles.chartTitle}>
                 {currentSymbol} - Analiza Giełdowa
-            </motion.h1>
+            </h2>
             <div className={styles.controlsRow}>
-                <motion.div 
-                    className={styles.customSelectContainer}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: 0.1 }}
-                >
+                <div className={styles.customSelectContainer}>
                     <label className={styles.selectLabel}>Zakres czasowy</label>
                 <div className={styles.customSelect}>
                     <div 
@@ -382,11 +355,8 @@ export default function StockChart() {
                     </div>
                     
                     {dropdownOpen && (
-                        <motion.div 
+                        <div 
                             className={styles.selectDropdown}
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.2 }}
                         >
                             {Object.entries(timeRanges).map(([value, { label }]) => (
                                 <div
@@ -401,17 +371,14 @@ export default function StockChart() {
                                     {label}
                                 </div>
                             ))}
-                        </motion.div>
+                        </div>
                     )}
                 </div>
-            </motion.div>
+            </div>
 
-            <motion.form 
+            <form 
                 onSubmit={handleSymbolSearch}
                 className={styles.symbolSearch}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.4, delay: 0.15 }}
             >
                 <label className={styles.selectLabel}>Symbol</label>
                 <div className={styles.symbolInputWrapper}>
@@ -420,83 +387,41 @@ export default function StockChart() {
                         value={symbolInput}
                         onChange={(e) => setSymbolInput(e.target.value.toUpperCase())}
                         placeholder="np. AAPL, TSLA"
-                        className={styles.symbolInput}
+                        className="input"
                     />
-                    <button type="submit" className={styles.searchBtn} disabled={fetchingData} title="Szukaj">
+                    <button type="submit" className="btn-primary" disabled={fetchingData}>
                         Szukaj
                     </button>
                 </div>
-            </motion.form>
+            </form>
             </div>
             
-            <motion.div 
-                className={styles.chartWrapper}
-                key={chartKey}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: fetchingData ? 0.5 : 1, scale: 1 }}
-                transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-            >
+            <div className={`${styles.chartWrapper} ${fetchingData ? styles.fetching : ''}`}>
                 {fetchingData && (
                     <div className={styles.fetchingOverlay}>
-                        <motion.div
-                            className={styles.fetchingSpinner}
-                            animate={{ 
-                                rotate: 360
-                            }}
-                            transition={{ 
-                                duration: 1, 
-                                repeat: Infinity,
-                                ease: "linear"
-                            }}
-                        />
-                        <p className={styles.fetchingText}>Ładowanie...</p>
+                        <div className={styles.spinner} />
+                        <p>Ładowanie...</p>
                     </div>
                 )}
                 <Chart type='candlestick' data={chartData} options={options} />
-            </motion.div>
+            </div>
 
-            <motion.div 
-                className={styles.stats}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-            >
-                <motion.div 
-                    className={styles.statItem}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: 0.35 }}
-                >
+            <div className={styles.stats}>
+                <div className={styles.statItem}>
                     <span className={styles.statLabel}>Aktualna cena:</span>
-                    <span 
-                        className={styles.statValue}
-                    >
-                        ${stockData[0]?.price.toFixed(2)}
-                    </span>
-                </motion.div>
-                <motion.div 
-                    className={styles.statItem}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.4 }}
-                >
+                    <span className={styles.statValue}>${stockData[0]?.price.toFixed(2)}</span>
+                </div>
+                <div className={styles.statItem}>
                     <span className={styles.statLabel}>Dzienna zmiana:</span>
-                    <span 
-                        className={`${styles.statValue} ${stockData[0]?.change.includes('-') ? styles.negative : styles.positive}`}
-                    >
+                    <span className={`${styles.statValue} ${stockData[0]?.change.includes('-') ? styles.negative : styles.positive}`}>
                         {stockData[0]?.change}
                     </span>
-                </motion.div>
-                <motion.div 
-                    className={styles.statItem}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: 0.45 }}
-                >
+                </div>
+                <div className={styles.statItem}>
                     <span className={styles.statLabel}>Wolumen:</span>
                     <span className={styles.statValue}>{stockData[0]?.volume}</span>
-                </motion.div>
-            </motion.div>
-        </motion.div>
+                </div>
+            </div>
+        </div>
     );
 }

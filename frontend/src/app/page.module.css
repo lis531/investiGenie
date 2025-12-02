@@ -1,9 +1,9 @@
 .page {
-  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem;
+  flex: 1;
 }
 
 .main {
@@ -43,6 +43,7 @@
 
 .featureCard {
   background: #f8fafc;
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border-radius: 1rem;
   padding: 2rem;
@@ -59,6 +60,30 @@
   font-size: 1.5rem;
   color: #1e293b;
   margin-bottom: 0.5rem;
+}
+
+/* Styled headings for feature cards */
+.featureHeading {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1e293b 0%, #3b82f6 50%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.01em;
+  display: inline-block;
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+
+.featureHeading::after {
+  content: "";
+  display: block;
+  width: 42px;
+  height: 3px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #3b82f6, #06b6d4);
+  margin-top: 8px;
 }
 
 .featureCard p {

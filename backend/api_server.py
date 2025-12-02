@@ -5,6 +5,7 @@ from api_data import get_api_data
 from csv_data import get_csv_data
 import os
 from typing import List, Dict, Any
+import algorithms
 
 app = FastAPI()
 
@@ -132,9 +133,13 @@ async def get_stock_data(range: str = "1d", symbol: str = "^GSPC"):
         # Get the appropriate function index based on range
         function_index = get_function_index_for_range(range)
         
-        # Fetch data from API
+        # Fetch data from API (use higher-resolution intraday for 1d)
         print(f"Fetching data for {symbol} with range {range}")
-        get_api_data(function_index, symbol)
+        if range == "1d":
+            # Try 1-minute granularity first; some symbols (indexes) may not support it
+            get_api_data(function_index, symbol, interval_index=0)
+        else:
+            get_api_data(function_index, symbol)
         
         # Check if the data file was created
         if not os.path.exists("stock_data.csv"):
@@ -198,6 +203,24 @@ async def get_stock_data(range: str = "1d", symbol: str = "^GSPC"):
                 filtered_data = [item for item in stock_data if item["date"].startswith(most_recent_date)]
             else:
                 filtered_data = []
+            # If too few points (e.g., only hourly), fallback to 5m and refetch
+            if len(filtered_data) < 30:
+                get_api_data(function_index, symbol, interval_index=1)
+                # reload csv and reparse
+                import csv
+                csv_data = []
+                with open("stock_data.csv", "r") as f:
+                    reader = csv.reader(f)
+                    for row in reader:
+                        csv_data.append(row)
+                stock_data = parse_stock_data(csv_data, include_time)
+                if stock_data:
+                    stock_data.sort(key=lambda x: datetime.strptime(
+                        x["date"], 
+                        "%Y-%m-%d %H:%M:%S" if " " in x["date"] else "%Y-%m-%d"
+                    ), reverse=True)
+                    most_recent_date = stock_data[0]["date"].split()[0]
+                    filtered_data = [item for item in stock_data if item["date"].startswith(most_recent_date)]
         else:
             filtered_data = stock_data
         
@@ -217,6 +240,8 @@ async def get_stock_data(range: str = "1d", symbol: str = "^GSPC"):
     except Exception as e:
         print(f"Error fetching stock data: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# Strategy simulation moved to frontend - this endpoint is no longer needed
 
 if __name__ == "__main__":
     import uvicorn

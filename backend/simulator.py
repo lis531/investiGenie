@@ -1,4 +1,4 @@
-from backend.plots import stock_plot, algorithm_plot
+from plots import stock_plot, algorithm_plot
 from csv_data import get_csv_data
 import algorithms
 
@@ -63,7 +63,7 @@ def algorithm_wrapper(prices: list[float], start_cash: float, monthly_cash: floa
     take_profit = float("inf")
 
     for i, price in enumerate(prices):
-        if i % 21 == 0:
+        if i % 21 == 0 and i > 0:
             cash += monthly_cash
             total_cash += monthly_cash
         if stop_loss >= price or take_profit <= price:

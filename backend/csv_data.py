@@ -1,7 +1,7 @@
 import csv
 from datetime import datetime
 
-def get_csv_data(path: str, period=('01/01/2000', '12/31/2018')):
+def get_csv_data(path: str, period=('01/01/2000', '09/17/2025')):
     start_date = datetime.strptime(period[0], "%m/%d/%Y")
     end_date = datetime.strptime(period[1], "%m/%d/%Y")
     result = []

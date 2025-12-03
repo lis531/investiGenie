@@ -22,7 +22,7 @@ def algorithm_plot(results):
 
     plt.plot(xpoints, ypoints)
     plt.xlabel("Duration[days]")
-    plt.ylabel("Profit[USD]")
+    plt.ylabel("Profit[%]")
     plt.title("Algorithm average profit over time")
     plt.subplots_adjust(top=0.9)
     plt.show()

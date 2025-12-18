@@ -3,9 +3,9 @@ InvestiGenie to aplikacja do szybkiej analizy rynku i testowania prostych strate
 
 ## Kluczowe funkcje
 - Podgląd świecowy spółek lub indeksów z zakresami 1d/1w/1m/1y i wyszukiwaniem symboli.
-- Proxy API w Next.js, które łączy się z FastAPI (`/api/stock-data`).
-- Symulacja strategii po stronie przeglądarki (kup i trzymaj, DCA, 3 dni spadków, kupowanie dołka) z konfiguracją początkowego kapitału i miesięcznych wpłat.
-- Strona „Kontakt z Bogiem” jako lekka zabawa z formularzem.
+- API w Next.js, które łączy się z FastAPI (`/api/stock-data`).
+- Symulacja strategii (kup i trzymaj, DCA, 3 dni spadków, kupowanie dołka) z konfiguracją początkowego kapitału i miesięcznych wpłat.
+- Strona „Kontakt z Bogiem” z "bardzo przydatną" radą inwestycyjną.
 
 ## Wymagania
 - Python 3.10+ (sprawdź `backend/requirements.txt`).
@@ -48,7 +48,7 @@ curl "http://localhost:8000/api/stock-data?range=1m&symbol=AAPL"
 - `/features` – wykres świecowy (komponent `StockChart`) z wyborem zakresu i symbolu oraz porównanie strategii (komponent `StrategyComparison`).
 - `/contact_god` – formularz z żartobliwą „radą inwestycyjną”.
 
-### Symulowane strategie (frontend)
+### Symulowane strategie
 - `buy_and_hold` – pojedynczy zakup na starcie.
 - `buy_everyday` – cykliczne zakupy (DCA).
 - `buy_after_3_down` – zakup po trzech kolejnych spadkach.
@@ -57,11 +57,10 @@ curl "http://localhost:8000/api/stock-data?range=1m&symbol=AAPL"
 ## Struktura
 - `backend/api_server.py` – FastAPI z endpointem `/api/stock-data`.
 - `backend/api_data.py` – pobieranie danych z Yahoo Finance.
-- `backend/algorithms.py`, `backend/simulator.py` – algorytmy i symulator (używane pomocniczo, symulacje w UI są frontowe).
+- `backend/algorithms.py`, `backend/simulator.py` – algorytmy i symulator.
 - `frontend/src/app/api/stock-data/route.ts` – proxy do backendu (ustaw `PYTHON_API_URL`).
 - `frontend/src/components/StockChart.tsx`, `StrategyComparison.tsx` – główne widoki danych.
 
 ## Przydatne informacje
 - Domyślny symbol to `^GSPC` (S&P 500). Możesz podać dowolny ticker obsługiwany przez Yahoo Finance (np. AAPL, TSLA, MSFT).
 - Backend zapisuje ostatnie pobrane dane do `stock_data.csv` w katalogu `backend`.
-- Jeśli frontend nie pobiera danych, upewnij się, że backend działa i adres w `PYTHON_API_URL` jest poprawny.

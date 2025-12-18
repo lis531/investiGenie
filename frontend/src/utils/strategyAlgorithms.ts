@@ -23,8 +23,10 @@ export const buyEveryday: StrategyAlgorithm = () => {
     return "buy";
 };
 
-export const buyAndHold: StrategyAlgorithm = (i) => {
-    if (i === 0) {
+export const buyAndHold: StrategyAlgorithm = (i, _prices, _startCash, monthlyCash, cash) => {
+    // Kup na starcie i przy każdej nowej wpłacie (co 21 dni), aby nie trzymać gotówki bez pracy
+    const isContributionDay = monthlyCash > 0 && i > 0 && i % 21 === 0;
+    if (i === 0 || (isContributionDay && cash > 0)) {
         return "buy";
     }
     return "none";

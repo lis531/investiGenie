@@ -93,7 +93,7 @@ def algorithm_wrapper(prices: list[float], start_cash: float, monthly_cash: floa
                 pass
     return cash, owned_quantity, total_cash
 
-def simulate(algorithm=algorithms.buy_and_hold, start_cash: float = 100000, monthly_cash: float = 0, stock: str = 'full_s&p500.csv', exposure_type:str="fixed_fraction", exposure_value:float=0.1) -> dict[int, float]:
+def simulate(algorithm=algorithms.buy_and_hold, start_cash: float = 100000, monthly_cash: float = 0, stock: str = 'stock_data.csv', exposure_type:str="fixed_fraction", exposure_value:float=0.1) -> dict[int, float]:
     """
        Simulates the performance of a given stock trading algorithm over historical data.
 

@@ -13,9 +13,9 @@
     - [Backend (FastAPI)](#backend-fastapi)
     - [Frontend (Next.js)](#frontend-nextjs)
     - [Komponenty funkcjonalne i przyciski](#komponenty-funkcjonalne-i-przyciski)
-    - [Narzędzia pomocnicze (frontend)](#narzędzia-pomocnicze-frontend)
-    - [Dane wejściowe/wyjściowe i formaty](#dane-wejściowewyjściowe-i-formaty)
-    - [Znane ograniczenia](#znane-ograniczenia)
+  - [Narzędzia pomocnicze (frontend)](#narzędzia-pomocnicze-frontend)
+  - [Dane wejściowe/wyjściowe i formaty](#dane-wejściowewyjściowe-i-formaty)
+  - [Znane ograniczenia](#znane-ograniczenia)
 
 ## Wstęp
 InvestiGenie to aplikacja do podglądu notowań giełdowych i szybkiego testowania prostych strategii inwestycyjnych. Backend (FastAPI) pobiera dane z Yahoo Finance przez bibliotekę `yfinance` i zapisuje do CSV. Frontend (Next.js 15, React) prezentuje wykres świecowy, symuluje strategie na danych dziennych oraz udostępnia formularze i nawigację. Ścieżka danych: użytkownik wybiera zakres i symbol → Next.js proxy `/api/stock-data` → FastAPI `/api/stock-data` → `yfinance` → CSV → JSON → komponenty `StockChart` i `StrategyComparison`.
@@ -34,14 +34,11 @@ InvestiGenie to aplikacja do podglądu notowań giełdowych i szybkiego testowan
 - Domyślne adresy: backend `http://localhost:8000`, frontend `http://localhost:3000`. Proxy Next.js korzysta z `PYTHON_API_URL`.
 
 ## Algorytmy i logika domenowa
+
 ### Pobieranie i parsowanie danych
-- [backend/api_data.py](https://github.com/lis531/investiGenie/blob/main/backend/api_data.py): `get_api_data(function_index, symbol, interval_index)`
-  - Wybiera interwał (intraday/dzienny/tygodniowy/miesięczny) i pobiera dane przez `yfinance`. Mapuje kolumny na `timestamp,open,high,low,close,volume`, formatuje daty (pełna data-godzina dla intraday), zapisuje do `stock_data.csv`.
-- [backend/csv_data.py](https://github.com/lis531/investiGenie/blob/main/backend/csv_data.py): `get_csv_data(path, period)`
-  - Filtruje wiersze CSV po zakresie dat (formaty `%m/%d/%Y` lub `%Y-%d-%m`). Zwraca listę wierszy.
-- [backend/api_server.py](https://github.com/lis531/investiGenie/blob/main/backend/api_server.py): `get_stock_data(range, symbol)`
-  - Określa funkcję pobierającą (intraday dla `1d`, dzienną dla `1w/1m/1y`), odpytuje `get_api_data`, czyta `stock_data.csv`, parsuje przez `parse_stock_data`, filtruje liczbę dni (7/22/252) lub pojedynczy dzień intraday, sortuje chronologicznie i zwraca JSON `{success, data[], range, symbol}`.
-  - Pomocnicze: `calculate_date_range`, `get_function_index_for_range`, `parse_stock_data` (oblicza dzienną zmianę w % i odrzuca wiersze z zerowymi cenami).
+- [backend/api_data.py](https://github.com/lis531/investiGenie/blob/main/backend/api_data.py): `get_api_data(function_index, symbol, interval_index)` wybiera interwał (intraday/dzienny/tygodniowy/miesięczny), pobiera dane przez `yfinance`, mapuje kolumny na `timestamp,open,high,low,close,volume`, formatuje daty (pełna data-godzina dla intraday), zapisuje do `stock_data.csv`.
+- [backend/csv_data.py](https://github.com/lis531/investiGenie/blob/main/backend/csv_data.py): `get_csv_data(path, period)` filtruje wiersze CSV po zakresie dat (formaty `%m/%d/%Y` lub `%Y-%d-%m`), zwraca listę wierszy.
+- [backend/api_server.py](https://github.com/lis531/investiGenie/blob/main/backend/api_server.py): `get_stock_data(range, symbol)` określa funkcję pobierającą (intraday dla `1d`, dzienną dla `1w/1m/1y`), odpytuje `get_api_data`, czyta `stock_data.csv`, parsuje przez `parse_stock_data`, filtruje liczbę dni (7/22/252) lub pojedynczy dzień intraday, sortuje chronologicznie i zwraca JSON `{success, data[], range, symbol}`. Pomocnicze: `calculate_date_range`, `get_function_index_for_range`, `parse_stock_data` (oblicza dzienną zmianę w % i odrzuca wiersze z zerowymi cenami).
 - [frontend/src/app/api/stock-data/route.ts](https://github.com/lis531/investiGenie/blob/main/frontend/src/app/api/stock-data/route.ts): Next.js proxy `GET /api/stock-data` przekazuje `range` i `symbol` do FastAPI (`PYTHON_API_URL`), zwraca JSON albo błąd 500.
 
 ### Strategie i symulacje (backend)
@@ -54,44 +51,18 @@ InvestiGenie to aplikacja do podglądu notowań giełdowych i szybkiego testowan
   - `reversal_after_a_decline(current_day, prices, downtrend_length=5)`: kup gdy następuje odbicie po ciągu spadków `downtrend_length`.
 - [backend/simulator.py](https://github.com/lis531/investiGenie/blob/main/backend/simulator.py):
   - `buy(cash, owned_quantity, price, order_quantity=1)` / `sell(...)`: operacje na gotówce i ilości akcji z walidacją środków.
-  - Wywołanie:
+  - `algorithm_wrapper(prices, start_cash, monthly_cash, algorithm, exposure_type="fixed_fraction", exposure_value=0.1)`: symuluje dzień po dniu, dopłaca środki co 21 dni, ustawia `stop_loss`/`take_profit` (niewykorzystane w algorytmach), kalkuluje wielkość zlecenia na podstawie ekspozycji.
+  - `simulate(algorithm, start_cash=100000, monthly_cash=0, stock='stock_data.csv', exposure_type="fixed_fraction", exposure_value=0.1)`: iteruje po oknach danych, uruchamia `algorithm_wrapper`, liczy średni procent zysku dla różnych długości okna, zwraca słownik wyników i rysuje wykres.
 
-    ```
-    algorithm_wrapper(
-      prices,
-      start_cash,
-      monthly_cash,
-      algorithm,
-      exposure_type="fixed_fraction",
-      exposure_value=0.1,
-    )
-    ```
-
-    Symuluje dzień po dniu, dopłaca środki co 21 dni, ustawia `stop_loss`/`take_profit` (niewykorzystane w algorytmach), kalkuluje wielkość zlecenia na podstawie ekspozycji.
-  - `simulate(algorithm, start_cash=100000, monthly_cash=0, stock='stock_data.csv', exposure_type="fixed_fraction", exposure_value=0.1)`: iteruje po oknach danych, uruchamia `algorithm_wrapper`, liczy średni procent zysku dla różnych długości okna, zwraca słownik wyników i rysuje wykres. Wywołanie w pełnej formie:
-
-    ```
-    simulate(
-      algorithm,
-      start_cash=100000,
-      monthly_cash=0,
-      stock='stock_data.csv',
-      exposure_type="fixed_fraction",
-      exposure_value=0.1,
-    )
-    ```
-
-  Zdjęcie 1: Wykres wyników symulatora backend
-  ![Zdjęcie 1: Wykres wyników symulatora backend](image-6.png)
+Zdjęcie 1: Wykres wyników symulatora backend
+![Zdjęcie 1: Wykres wyników symulatora backend](image-6.png)
 
 ### Strategie (frontend, symulacja klienta)
-- [frontend/src/utils/strategyAlgorithms.ts](https://github.com/lis531/investiGenie/blob/main/frontend/src/utils/strategyAlgorithms.ts):
-  - `buy_after_3_down`, `buy_everyday`, `buy_and_hold`, `buy_the_dip` w wersji TypeScript, zwracają `"buy"` lub `"none"` na podstawie bieżącego indeksu i szeregu cen.
-- [frontend/src/components/StrategyComparison.tsx](https://github.com/lis531/investiGenie/blob/main/frontend/src/components/StrategyComparison.tsx):
-  - Pobiera dane przez `/api/stock-data?range=1y`, tnie ostatnie 252 dni, iteruje po strategiach z `strategyAlgorithms`, symuluje portfel (dokupienie co 21 dni, ekspozycja 10% kapitału, dla buy&hold 100%), zapisuje historię wartości portfela.
-  - Oblicza `final_value`, `total_invested`, `profit`, `profit_percentage`, `shares_owned`, `cash_remaining`, `portfolio_history` dla każdej strategii.
+- [frontend/src/utils/strategyAlgorithms.ts](https://github.com/lis531/investiGenie/blob/main/frontend/src/utils/strategyAlgorithms.ts): `buy_after_3_down`, `buy_everyday`, `buy_and_hold`, `buy_the_dip` w wersji TypeScript, zwracają "buy" lub "none" na podstawie bieżącego indeksu i szeregu cen.
+- [frontend/src/components/StrategyComparison.tsx](https://github.com/lis531/investiGenie/blob/main/frontend/src/components/StrategyComparison.tsx): pobiera dane przez `/api/stock-data?range=1y`, tnie ostatnie 252 dni, iteruje po strategiach z `strategyAlgorithms`, symuluje portfel (dokupienie co 21 dni, ekspozycja 10% kapitału, dla buy&hold 100%), zapisuje historię wartości portfela. Oblicza `final_value`, `total_invested`, `profit`, `profit_percentage`, `shares_owned`, `cash_remaining`, `portfolio_history` dla każdej strategii.
 
 ## Rozmieszczenie i działanie komponentów
+
 ### Backend (FastAPI)
 - Endpoint: `GET /api/stock-data` w [backend/api_server.py](https://github.com/lis531/investiGenie/blob/main/backend/api_server.py). Parametry `range=1d|1w|1m|1y`, `symbol` (domyślnie `^GSPC`). Zwraca posortowaną listę punktów czasowych do wykresu świecowego.
 - Pliki wspierające: [backend/api_data.py](https://github.com/lis531/investiGenie/blob/main/backend/api_data.py) (pobranie danych), [backend/csv_data.py](https://github.com/lis531/investiGenie/blob/main/backend/csv_data.py) (filtrowanie CSV), [backend/algorithms.py](https://github.com/lis531/investiGenie/blob/main/backend/algorithms.py) i [backend/simulator.py](https://github.com/lis531/investiGenie/blob/main/backend/simulator.py) (testy strategii w Pythonie), [backend/plots.py](https://github.com/lis531/investiGenie/blob/main/backend/plots.py) (wizualizacje lokalne Matplotlib).
@@ -107,6 +78,7 @@ InvestiGenie to aplikacja do podglądu notowań giełdowych i szybkiego testowan
 
 Zdjęcie 2: Ekran główny aplikacji InvestiGenie
 ![Zdjęcie 2: Ekran główny aplikacji InvestiGenie](image.png)
+
 - **StockChart** ([frontend/src/components/StockChart.tsx](https://github.com/lis531/investiGenie/blob/main/frontend/src/components/StockChart.tsx))
   - Dane: pobiera przez `/api/stock-data` na podstawie `range` i `symbol`.
   - Kontrolki: rozwijane menu „Zakres czasowy” (1d/1w/1m/1y), pole tekstowe „Symbol”, przycisk „Szukaj” wysyłający żądanie z bieżącym zakresem. Kliknięcie opcji zakresu refetchuje dane i zamyka dropdown. Stan ładowania pokazuje spinner i overlay. Statystyki pod wykresem: aktualna cena, dzienna zmiana, wolumen z pierwszego elementu danych.
@@ -114,6 +86,7 @@ Zdjęcie 2: Ekran główny aplikacji InvestiGenie
 
 Zdjęcie 3: Wykres świecowy StockChart z danymi rynku
 ![Zdjęcie 3: Wykres świecowy StockChart z danymi rynku](image-3.png)
+
 - **StrategyComparison** ([frontend/src/components/StrategyComparison.tsx](https://github.com/lis531/investiGenie/blob/main/frontend/src/components/StrategyComparison.tsx))
   - Dane: używa danych z `/api/stock-data?range=1y` do symulacji klienta.
   - Kontrolki: pola wejściowe „Symbol akcji”, „Początkowy kapitał”, „Miesięczna wpłata”; przycisk „Symuluj” uruchamia ponowną symulację na aktualnych parametrach. Klikalne kafelki strategii pozwalają włączać/wyłączać krzywe na wykresie. Kafelki pokazują nazwę, opis, wartość końcową i zysk.
@@ -121,26 +94,30 @@ Zdjęcie 3: Wykres świecowy StockChart z danymi rynku
 
 Zdjęcie 4: Porównanie strategii - wykres linii portfela
 ![Zdjęcie 4: Porównanie strategii - wykres linii portfela](image-1.png)
+
 Zdjęcie 5: Porównanie strategii - kafelki wyników
 ![Zdjęcie 5: Porównanie strategii - kafelki wyników](image-2.png)
+
 - **Contact God** ([frontend/src/app/contact_god/page.tsx](https://github.com/lis531/investiGenie/blob/main/frontend/src/app/contact_god/page.tsx))
   - Kontrolki: pola „Imię”, „Email”, „Pytanie o inwestycję”; przycisk „Zapytaj Boga”.
   - Działanie: deterministycznie oblicza hash z treści pytania, losuje odpowiedź TAK/NIE i komunikat z predefiniowanej listy; wynik wyświetla w karcie pod formularzem.
 
 Zdjęcie 6: Formularz Kontakt z Bogiem z polami wejściowymi
 ![Zdjęcie 6: Formularz Kontakt z Bogiem z polami wejściowymi](image-4.png)
+
 Zdjęcie 7: Odpowiedź generatora Kontakt z Bogiem
 ![Zdjęcie 7: Odpowiedź generatora Kontakt z Bogiem](image-5.png)
+
 - Wspólny CSS i layout: `globals.css`, `page.module.css` w poszczególnych widokach, style modułowe przy komponentach.
 
-### Narzędzia pomocnicze (frontend)
+## Narzędzia pomocnicze (frontend)
 - [frontend/src/utils/csvParser.ts](https://github.com/lis531/investiGenie/blob/main/frontend/src/utils/csvParser.ts): parser CSV i formatowanie dat do `YYYY-MM-DD` dla ewentualnego odczytu plików z katalogu backendu (obecnie nieużywany w głównych widokach).
 - [frontend/src/utils/strategyAlgorithms.ts](https://github.com/lis531/investiGenie/blob/main/frontend/src/utils/strategyAlgorithms.ts): definicje strategii w TypeScript używane w `StrategyComparison`.
 
-### Dane wejściowe/wyjściowe i formaty
+## Dane wejściowe/wyjściowe i formaty
 - JSON z `/api/stock-data`: tablica obiektów `{date, price, open, high, low, volume, change, file_name}` posortowana rosnąco po czasie (po filtracji). Wartość `change` to procentowa zmiana między `open` a `close` dla wiersza.
 - Wymagane parametry użytkownika na frontendzie: symbol giełdowy zgodny z Yahoo Finance, zakres czasowy (1d/1w/1m/1y), kapitał startowy i miesięczny dla symulacji.
 
-### Znane ograniczenia
+## Znane ograniczenia
 - Endpoint `/api/strategies` w backendzie jest nieaktywny; symulacje wykonuje frontend. Plik [frontend/src/app/api/strategies/route.ts](https://github.com/lis531/investiGenie/blob/main/frontend/src/app/api/strategies/route.ts) zwróci błąd, jeśli backend nie udostępnia tej ścieżki.
 - Symulator po stronie backendu ([backend/simulator.py](https://github.com/lis531/investiGenie/blob/main/backend/simulator.py)) jest uruchamiany ad-hoc, brak ekspozycji HTTP. `stop_loss` i `take_profit` są ustawiane, ale żaden algorytm nie generuje tych sygnałów.
